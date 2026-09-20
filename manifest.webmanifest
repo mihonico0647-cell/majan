@@ -1,0 +1,9 @@
+{
+  "name": "MAJAN REAL MATCH α",
+  "short_name": "MAJAN",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fffdf8",
+  "theme_color": "#fffdf8",
+  "description": "ひとりで遊びながら覚える初心者向け麻雀"
+}

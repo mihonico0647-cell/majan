@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#fffdf8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MAJAN">
+<link rel="manifest" href="./manifest.webmanifest">
+<title>MAJAN REAL MATCH</title>
+<style>
+:root{--ink:#111;--paper:#fffdf8;--yellow:#ffd84d;--green:#9cddb3;--blue:#9ed2ff;--red:#ff9a8c;--grey:#efefef}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif}
+button{font:inherit;color:inherit}.app{max-width:560px;margin:auto;min-height:100vh;padding:calc(12px + env(safe-area-inset-top)) 10px calc(20px + env(safe-area-inset-bottom))}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.logo{font-size:25px;font-weight:1000;letter-spacing:-1px}.tag{font-size:10px;font-weight:1000;border:2px solid #111;border-radius:99px;padding:5px 8px;background:white}
+.table{border:3px solid #111;border-radius:22px;background:white;box-shadow:4px 4px 0 #111;overflow:hidden}
+.cpurow{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:2px solid #111}.cpu{padding:8px 5px;text-align:center;border-right:1px solid #bbb;font-size:10px;font-weight:900}.cpu:last-child{border-right:0}.cpu b{display:block;font-size:13px}
+.center{min-height:118px;background:#f3f3f3;padding:8px}.meta{display:flex;justify-content:space-between;font-size:11px;font-weight:900;margin-bottom:6px}.river{display:grid;grid-template-columns:repeat(12,1fr);gap:2px}.discard{height:34px;border:1px solid #999;border-radius:4px;background:white;display:grid;place-items:center;font-size:21px;overflow:hidden}
+.guide{margin:11px 0;border:3px solid #111;border-radius:18px;background:var(--yellow);padding:11px 12px;box-shadow:3px 3px 0 #111}.guide .small{font-size:9px;font-weight:1000;letter-spacing:.12em}.guide b{display:block;font-size:16px;margin-top:3px}.guide p{font-size:11px;font-weight:700;line-height:1.45;margin:4px 0 0}
+.handwrap{margin-top:10px}.you{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:1000;margin:0 2px 5px}.hand{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:2px}
+.tile{min-width:0;height:57px;padding:0;background:white;border:2px solid #111;border-radius:6px;box-shadow:1px 2px 0 #111;font-size:clamp(20px,6.5vw,31px);display:grid;place-items:center;overflow:hidden}.tile.draw{background:#fff2b0}.tile.suggest{outline:3px solid var(--blue);outline-offset:0}.tile:active{transform:translateY(2px);box-shadow:none}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.btn{border:2.5px solid #111;border-radius:14px;background:white;padding:10px 7px;font-size:12px;font-weight:1000;box-shadow:2px 2px 0 #111}.btn.primary{background:var(--yellow)}.btn.win{grid-column:1/-1;background:var(--green);font-size:16px}.btn:disabled{opacity:.3;box-shadow:none}
+.log{margin-top:10px;border:2px solid #111;border-radius:14px;background:white;padding:8px 10px;font-size:10px;font-weight:700;line-height:1.5;min-height:45px}
+.modal{display:none;position:fixed;inset:0;background:#0009;z-index:20;place-items:center;padding:18px}.modal.on{display:grid}.card{max-width:430px;width:100%;background:white;border:3px solid #111;border-radius:23px;padding:19px;box-shadow:5px 5px 0 #111}.card .big{text-align:center;font-size:46px}.card h2{font-size:24px;margin:5px 0}.card p{font-size:13px;font-weight:700;line-height:1.6;white-space:pre-line}.note{font-size:9px;color:#666;margin-top:9px;line-height:1.4}
+</style></head>
+<body><main class="app">
+<div class="top"><div class="logo">MAJAN.</div><div class="tag">REAL MATCH α</div></div>
+<div class="table">
+ <div class="cpurow">
+  <div class="cpu"><b>CPU 西</b><span id="c2">13枚</span></div>
+  <div class="cpu"><b>CPU 北</b><span id="c3">13枚</span></div>
+  <div class="cpu"><b>CPU 東</b><span id="c1">13枚</span></div>
+ </div>
+ <div class="center"><div class="meta"><span>東1局｜あなた：南</span><span id="wall">牌山 --</span></div><div id="river" class="river"></div></div>
+</div>
+<div class="guide"><div class="small">MAJAN GUIDE</div><b id="gm">配牌中...</b><p id="gs">今回は牌山から本当に配っています。</p></div>
+<div class="handwrap"><div class="you"><span>YOUR HAND</span><span id="status">13枚</span></div><div id="hand" class="hand"></div></div>
+<div class="actions"><button class="btn" onclick="explain()">なぜ？</button><button class="btn primary" onclick="showHint()">おすすめ</button><button id="win" class="btn win" onclick="playerTsumo()" disabled>TSUMO!</button></div>
+<div id="log" class="log">ゲームを準備しています。</div>
+<div class="note">α版：136牌・4人進行・ツモ/打牌・基本形アガリ判定・CPUアガリ・流局を実装。鳴き、リーチ宣言、役・点数計算は次段階です。</div>
+</main>
+<div id="modal" class="modal"><div class="card"><div id="mbig" class="big">🀄️</div><h2 id="mtitle"></h2><p id="mtext"></p><button class="btn primary" style="width:100%" onclick="closeM()">OK</button></div></div>
+<script>
+const glyphs=["🀇","🀈","🀉","🀊","🀋","🀌","🀍","🀎","🀏","🀙","🀚","🀛","🀜","🀝","🀞","🀟","🀠","🀡","🀐","🀑","🀒","🀓","🀔","🀕","🀖","🀗","🀘","🀀","🀁","🀂","🀃","🀆","🀅","🀄"];
+const names=["1萬","2萬","3萬","4萬","5萬","6萬","7萬","8萬","9萬","1筒","2筒","3筒","4筒","5筒","6筒","7筒","8筒","9筒","1索","2索","3索","4索","5索","6索","7索","8索","9索","東","南","西","北","白","發","中"];
+let wall=[],hands=[[],[],[],[]],rivers=[[],[],[],[]],turn=0,drawnIndex=-1,gameOver=false,lastHint=[];
+function buildWall(){wall=[];for(let t=0;t<34;t++)for(let k=0;k<4;k++)wall.push(t);for(let i=wall.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[wall[i],wall[j]]=[wall[j],wall[i]]}}
+function sortHand(h){h.sort((a,b)=>a-b)}
+function deal(){buildWall();for(let r=0;r<13;r++)for(let p=0;p<4;p++)hands[p].push(wall.pop());hands.forEach(sortHand);render();setGuide("本当に配牌しました。","あなたは南家。まずCPU東から進み、あなたの番になったら1枚ツモして1枚捨てます。");log("136牌をシャッフル。対局開始。");setTimeout(()=>cpuTurn(0),500)}
+function render(){
+ document.getElementById("wall").textContent="牌山 "+wall.length+"枚";
+ ["c1","c2","c3"].forEach((id,i)=>document.getElementById(id).textContent=hands[i===0?0:i+1].length+"枚");
+ let rv=[...rivers[0],...rivers[1],...rivers[2],...rivers[3]].slice(-36);
+ document.getElementById("river").innerHTML=rv.map(t=>`<div class="discard">${glyphs[t]}</div>`).join("");
+ let box=document.getElementById("hand");box.innerHTML="";
+ hands[1].forEach((t,i)=>{let b=document.createElement("button");b.className="tile"+(i===drawnIndex?" draw":"")+(lastHint.includes(i)?" suggest":"");b.textContent=glyphs[t];b.title=names[t];b.disabled=gameOver||turn!==1||hands[1].length!==14;b.onclick=()=>discardPlayer(i);box.appendChild(b)});
+ document.getElementById("status").textContent=hands[1].length+"枚";
+ document.getElementById("win").disabled=!(turn===1&&hands[1].length===14&&isAgari(hands[1]));
+}
+function draw(p){if(!wall.length){endDraw();return false}hands[p].push(wall.pop());return true}
+function cpuTurn(p){
+ if(gameOver)return;if(!draw(p))return;
+ if(isAgari(hands[p])){gameOver=true;render();msg("CPUがツモ！","今回はCPUが先にアガりました。\nちゃんと負ける麻雀になりました。もう一局でリベンジできます。","😑",true);return}
+ let idx=chooseDiscard(hands[p]);let t=hands[p].splice(idx,1)[0];rivers[p].push(t);sortHand(hands[p]);render();log(`CPU ${["東","南","西","北"][p]}：${names[t]} を捨てた`);
+ let next=(p+1)%4;if(next===1)setTimeout(playerDraw,350);else setTimeout(()=>cpuTurn(next),350)
+}
+function playerDraw(){
+ if(gameOver)return;turn=1;lastHint=[];if(!draw(1))return;drawnIndex=hands[1].length-1;render();
+ if(isAgari(hands[1]))setGuide("アガれる！","緑の TSUMO! が本当に成立しています。押してOK。");
+ else setGuide("あなたの番。1枚捨てよう。","黄色っぽい牌が今引いた牌。迷ったら「おすすめ」を押してみよう。");
+ log("あなたが "+names[hands[1][drawnIndex]]+" をツモ。");
+}
+function discardPlayer(i){
+ if(gameOver||turn!==1||hands[1].length!==14)return;
+ let t=hands[1].splice(i,1)[0];rivers[1].push(t);sortHand(hands[1]);drawnIndex=-1;lastHint=[];turn=2;render();log("あなた："+names[t]+" を捨てた。");setGuide("CPUの番。","3人が順番にツモして捨てます。");setTimeout(()=>cpuTurn(2),350)
+}
+function playerTsumo(){if(!isAgari(hands[1]))return;gameOver=true;render();msg("本当にツモ！ 🎉","今回は台本なし。\nランダムな牌山から、自分の手が基本のアガリ形になりました。\n\n初・合法アガリです。","🀄️",true)}
+function counts(h){let c=Array(34).fill(0);h.forEach(x=>c[x]++);return c}
+function isAgari(h){if(h.length!==14)return false;let c=counts(h);for(let p=0;p<34;p++){if(c[p]>=2){c[p]-=2;if(meldable(c)){c[p]+=2;return true}c[p]+=2}}return false}
+function meldable(c){let i=c.findIndex(x=>x>0);if(i<0)return true;if(c[i]>=3){c[i]-=3;if(meldable(c)){c[i]+=3;return true}c[i]+=3}let suit=Math.floor(i/9);if(i<27&&i%9<=6&&Math.floor((i+2)/9)===suit&&c[i+1]>0&&c[i+2]>0){c[i]--;c[i+1]--;c[i+2]--;if(meldable(c)){c[i]++;c[i+1]++;c[i+2]++;return true}c[i]++;c[i+1]++;c[i+2]++}return false}
+function score13(h){let c=counts(h),score=0;for(let i=0;i<34;i++){if(c[i]>=2)score+=2;if(c[i]>=3)score+=3;if(i<27&&i%9<=6&&c[i]&&c[i+1]&&c[i+2])score+=3}return score}
+function chooseDiscard(h){let best=-999,idx=0;for(let i=0;i<h.length;i++){let x=h.splice(i,1)[0],s=score13(h);h.splice(i,0,x);if(s>best){best=s;idx=i}}return idx}
+function showHint(){if(turn!==1||hands[1].length!==14){msg("まだあなたの番じゃない","CPUの進行をちょっと待ってね。","🀄️");return}let best=-999,inds=[];for(let i=0;i<hands[1].length;i++){let x=hands[1].splice(i,1)[0],s=score13(hands[1]);hands[1].splice(i,0,x);if(s>best){best=s;inds=[i]}else if(s===best)inds.push(i)}lastHint=inds;render();msg("おすすめを青くしたよ","今ある3枚組やペアをなるべく壊しにくい候補です。\nまだ簡易AIなので「絶対の正解」ではありません。","💡")}
+function explain(){msg("今なにしてる？","各ターンで1枚引き、14枚から1枚捨てます。\n目標は基本形「3枚組×4＋ペア×1」。\n\n今回は本当に牌山がランダムなので、あなたもCPUもアガれないまま流局することがあります。","?")}
+function chooseRestart(){location.reload()}
+function endDraw(){gameOver=true;render();msg("流局！","牌山がなくなりました。誰もアガれず終了。\nこれも普通に麻雀です。八百長ではありません。","🀫",true)}
+function setGuide(a,b){document.getElementById("gm").textContent=a;document.getElementById("gs").textContent=b}
+function log(x){document.getElementById("log").textContent=x}
+function msg(a,b,c,restart=false){document.getElementById("mtitle").textContent=a;document.getElementById("mtext").textContent=b;document.getElementById("mbig").textContent=c;let btn=document.querySelector("#modal .btn");btn.textContent=restart?"もう一局":"OK";btn.onclick=restart?chooseRestart:closeM;document.getElementById("modal").classList.add("on")}
+function closeM(){document.getElementById("modal").classList.remove("on")}
+deal();
+</script></body></html>
